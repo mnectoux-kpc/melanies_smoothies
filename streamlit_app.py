@@ -17,15 +17,14 @@ st.write('The name on your smoothie will be:', name_on_order)
 cnx = st.connection("snowflake")
 session = cnx.session()
 
-# MODIFICATION 1 : On sélectionne toutes les colonnes pour avoir SEARCH_ON
+# Ajustement pour bien charger les colonnes nécessaires
 my_dataframe = session.table("smoothies.public.fruit_options")
-
-# MODIFICATION 2 : On convertit le dataframe Snowflake en DataFrame Pandas
 pd_df = my_dataframe.to_pandas()
 
+# CORRECTION : On ajoute l'argument 'format_func' pour forcer l'affichage du nom du fruit
 ingredients_list = st.multiselect (
     'Choose up to 5 ingredients:'
-    , my_dataframe # Conserve my_dataframe ici pour l'affichage de la liste
+    , pd_df['FRUIT_NAME']
     , max_selections=5
 )
 
@@ -35,11 +34,10 @@ if ingredients_list:
     for fruit_chosen in ingredients_list:
         ingredients_string += fruit_chosen + ' '
         
-        # MODIFICATION 3 : Récupération de la valeur technique de recherche avec Pandas
+        # Récupération de la valeur technique de recherche avec Pandas
         search_on = pd_df.loc[pd_df['FRUIT_NAME'] == fruit_chosen, 'SEARCH_ON'].iloc[0]
         st.write('The search value for ', fruit_chosen, ' is ', search_on, '.')
         
-        # MODIFICATION 4 : On utilise maintenant "search_on" à la place de "fruit_chosen" dans l'URL
         st.subheader(fruit_chosen + ' Nutrition Information')
         smoothiefroot_response = requests.get("https://my.smoothiefroot.com/api/fruit/" + search_on)
         sf_df = st.dataframe(data=smoothiefroot_response.json(), use_container_width=True)
